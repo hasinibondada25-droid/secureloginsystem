@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Secure Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+            <div class="flash {{ 'success' if category == 'success' else 'error' }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <div class="dashboard-content">
+            <div class="avatar">&#x1F464;</div>
+            <h1>{{ user }}</h1>
+            <div class="badge">&#x2714; Authenticated</div>
+            <p class="info-text">
+                You are securely logged in with<br>
+                two-factor authentication enabled.
+            </p>
+            <a href="/logout">
+                <button class="btn-logout">
+                    <span class="btn-text">Sign Out</span>
+                </button>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | Secure Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="logo-icon">&#x1F4CB;</div>
+        <h2>Create Account</h2>
+        <p class="subtitle">Register for a secure account with 2FA</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+            <div class="flash {{ 'success' if category == 'success' else 'error' }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" id="registerForm" action="/register">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">&#x1F464;</span>
+                    <input type="text" id="username" name="username" placeholder="Choose a username (min 4 chars)" required autofocus>
+                </div>
+                <div class="validation-msg" id="usernameMsg"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">&#x1F512;</span>
+                    <input type="password" id="password" name="password" placeholder="Min 6 characters" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Toggle password visibility" tabindex="-1">&#x1F441;</button>
+                </div>
+                <div class="validation-msg" id="passwordMsg"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">&#x1F512;</span>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+                </div>
+                <div class="validation-msg" id="confirmMsg"></div>
+            </div>
+
+            <button type="submit" id="submitBtn">
+                <span class="btn-text">Create Account</span>
+                <div class="btn-loader"></div>
+            </button>
+        </form>
+
+        <p class="bottom-link">
+            Already have an account? <a href="/login">Sign in</a>
+        </p>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const pwd = document.getElementById('password');
+            pwd.type = pwd.type === 'password' ? 'text' : 'password';
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const usernameMsg = document.getElementById('usernameMsg');
+            const passwordMsg = document.getElementById('passwordMsg');
+            const confirmMsg = document.getElementById('confirmMsg');
+            let valid = true;
+
+            usernameMsg.textContent = '';
+            usernameMsg.className = 'validation-msg';
+            passwordMsg.textContent = '';
+            passwordMsg.className = 'validation-msg';
+            confirmMsg.textContent = '';
+            confirmMsg.className = 'validation-msg';
+
+            if (username.length < 4) {
+                usernameMsg.textContent = 'Username must be at least 4 characters';
+                usernameMsg.className = 'validation-msg error';
+                valid = false;
+            }
+
+            if (password.length < 6) {
+                passwordMsg.textContent = 'Password must be at least 6 characters';
+                passwordMsg.className = 'validation-msg error';
+                valid = false;
+            }
+
+            if (confirm !== password) {
+                confirmMsg.textContent = 'Passwords do not match';
+                confirmMsg.className = 'validation-msg error';
+                valid = false;
+            }
+
+            if (!valid) {
+                e.preventDefault();
+            } else {
+                document.getElementById('submitBtn').classList.add('loading');
+            }
+        });
+    </script>
+</body>
+</html>

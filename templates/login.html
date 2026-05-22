@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | Secure Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="logo-icon">&#x1F512;</div>
+        <h2>Welcome Back</h2>
+        <p class="subtitle">Sign in to your secure account</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+            <div class="flash {{ 'success' if category == 'success' else 'error' }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% if show_2fa %}
+        <div style="background:rgba(120,80,255,0.1);border:1px solid rgba(120,80,255,0.2);border-radius:14px;padding:20px;margin-bottom:24px;text-align:left">
+            <p style="color:#fff;font-weight:600;font-size:14px;margin-bottom:12px">&#x1F510; Set up two-factor authentication</p>
+            <p style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:10px">Scan this QR code with your authenticator app:</p>
+            <div style="background:#fff;border-radius:10px;padding:12px;text-align:center;margin-bottom:10px">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data={{ show_2fa.provisioning_uri | urlencode }}"
+                     alt="QR Code" style="width:140px;height:140px;border-radius:6px">
+            </div>
+            <p style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:6px">Or enter this key manually:</p>
+            <div style="display:flex;gap:8px;align-items:center">
+                <code id="2fa-secret" style="flex:1;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:13px;letter-spacing:2px;text-align:center;user-select:all">{{ show_2fa.secret }}</code>
+                <button onclick="copy2fa()" style="width:auto;padding:10px 14px;font-size:12px;flex-shrink:0" type="button">Copy</button>
+            </div>
+        </div>
+        {% endif %}
+
+        <form method="POST" id="loginForm" onsubmit="return validateLogin()">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">&#x1F464;</span>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required autofocus>
+                </div>
+                <div class="validation-msg" id="usernameMsg"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">&#x1F512;</span>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Toggle password visibility" tabindex="-1">&#x1F441;</button>
+                </div>
+                <div class="validation-msg" id="passwordMsg"></div>
+            </div>
+
+            <button type="submit" id="submitBtn">
+                <span class="btn-text">Sign In</span>
+                <div class="btn-loader"></div>
+            </button>
+        </form>
+
+        <p class="bottom-link">
+            Don't have an account? <a href="/register">Create one</a>
+        </p>
+    </div>
+
+    <script>
+        {% if show_2fa %}
+        function copy2fa() {
+            navigator.clipboard.writeText(document.getElementById("2fa-secret").textContent).then(() => {
+                const btn = document.querySelector('button[onclick="copy2fa()"]');
+                btn.textContent = 'Copied!';
+                btn.style.background = 'rgba(48,209,88,0.2)';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                    btn.style.background = '';
+                }, 2000);
+            });
+        }
+        {% endif %}
+
+        function togglePassword() {
+            const pwd = document.getElementById('password');
+            pwd.type = pwd.type === 'password' ? 'text' : 'password';
+        }
+
+        function validateLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const usernameMsg = document.getElementById('usernameMsg');
+            const passwordMsg = document.getElementById('passwordMsg');
+            let valid = true;
+
+            usernameMsg.textContent = '';
+            usernameMsg.className = 'validation-msg';
+            passwordMsg.textContent = '';
+            passwordMsg.className = 'validation-msg';
+
+            if (username.length < 4) {
+                usernameMsg.textContent = 'Username must be at least 4 characters';
+                usernameMsg.className = 'validation-msg error';
+                valid = false;
+            } else {
+                usernameMsg.className = 'validation-msg success';
+            }
+
+            if (password.length < 6) {
+                passwordMsg.textContent = 'Password must be at least 6 characters';
+                passwordMsg.className = 'validation-msg error';
+                valid = false;
+            } else {
+                passwordMsg.className = 'validation-msg success';
+            }
+
+            if (valid) {
+                document.getElementById('submitBtn').classList.add('loading');
+            }
+            return valid;
+        }
+
+        document.getElementById('username').addEventListener('input', function() {
+            const msg = document.getElementById('usernameMsg');
+            if (this.value.trim().length >= 4) {
+                msg.textContent = '';
+                msg.className = 'validation-msg';
+            }
+        });
+
+        document.getElementById('password').addEventListener('input', function() {
+            const msg = document.getElementById('passwordMsg');
+            if (this.value.length >= 6) {
+                msg.textContent = '';
+                msg.className = 'validation-msg';
+            }
+        });
+    </script>
+</body>
+</html>

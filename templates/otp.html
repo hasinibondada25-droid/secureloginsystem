@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP | Secure Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="logo-icon">&#x1F510;</div>
+        <h2>Two-Factor Authentication</h2>
+        <p class="subtitle">Enter the 6-digit code from your authenticator app</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+            <div class="flash {{ 'success' if category == 'success' else 'error' }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" id="otpForm" onsubmit="return submitOtp()">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="otp-inputs" id="otpInputs">
+                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autofocus>
+                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            </div>
+
+            <input type="hidden" name="otp" id="otpHidden">
+
+            <button type="submit" id="submitBtn">
+                <span class="btn-text">Verify OTP</span>
+                <div class="btn-loader"></div>
+            </button>
+        </form>
+
+        <p class="bottom-link">
+            <a href="/login">Back to login</a>
+        </p>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll('.otp-input');
+        const hidden = document.getElementById('otpHidden');
+
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 1);
+                if (this.value) {
+                    this.classList.add('filled');
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                } else {
+                    this.classList.remove('filled');
+                }
+                updateHidden();
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !this.value && index > 0) {
+                    inputs[index - 1].focus();
+                    inputs[index - 1].value = '';
+                    inputs[index - 1].classList.remove('filled');
+                    updateHidden();
+                }
+                if (e.key === 'Enter') {
+                    document.getElementById('otpForm').requestSubmit();
+                }
+            });
+
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+                paste.split('').forEach((char, i) => {
+                    if (inputs[i]) {
+                        inputs[i].value = char;
+                        inputs[i].classList.add('filled');
+                    }
+                });
+                const nextIndex = Math.min(paste.length, inputs.length - 1);
+                inputs[nextIndex].focus();
+                updateHidden();
+            });
+        });
+
+        function updateHidden() {
+            hidden.value = Array.from(inputs).map(i => i.value).join('');
+        }
+
+        function submitOtp() {
+            const code = Array.from(inputs).map(i => i.value).join('');
+            if (code.length !== 6) {
+                inputs.forEach(inp => {
+                    if (!inp.value) {
+                        inp.style.borderColor = 'rgba(255, 59, 48, 0.5)';
+                        setTimeout(() => inp.style.borderColor = '', 1500);
+                    }
+                });
+                return false;
+            }
+            document.getElementById('submitBtn').classList.add('loading');
+            return true;
+        }
+    </script>
+</body>
+</html>
