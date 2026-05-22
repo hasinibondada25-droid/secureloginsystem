@@ -1,0 +1,4 @@
+flask>=3.0
+flask-bcrypt>=1.0
+pyotp>=2.9
+gunicorn>=21.2
